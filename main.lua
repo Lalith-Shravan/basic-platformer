@@ -9,11 +9,18 @@ local player
 local collisionLayer
 local debugMode = false
 
+-- Scaling
+local GAME_WIDTH = 240
+local GAME_HEIGHT = 160
+local SCALE = 4
+local canvas
+
 function love.load()
     love.graphics.setDefaultFilter("nearest", "nearest")
 
+    canvas = love.graphics.newCanvas(GAME_WIDTH, GAME_HEIGHT)
+
     -- Load the Tiled map (export as .lua from Tiled)
-    -- Make sure to place your exported map in the maps/ folder
     local mapPath = "maps/level1.lua"
     if love.filesystem.getInfo(mapPath) then
         map = sti(mapPath)
@@ -32,7 +39,6 @@ function love.load()
     end
 
     -- Load player tileset
-    -- Replace with your tileset path and dimensions
     local playerTileset = nil
     local tilesetPath = "assets/player.png"
     if love.filesystem.getInfo(tilesetPath) then
@@ -43,20 +49,16 @@ function love.load()
     player = Player.new(100, 100, playerTileset, 8, 8)
 
     -- Set up animations
-    -- Adjust frame numbers based on your tileset layout
-    -- Frame numbers are 1-indexed, counting left-to-right, top-to-bottom
     player:setupAnimations({
-        idle = {1, 2},        -- Frames for idle animation
-        run = {3, 4},   -- Frames for running
-        jump = {1}            -- Frame for jumping
+        idle = {1},
+        run = {3, 4},
+        jump = {2}
     })
 end
 
 function love.update(dt)
     -- Cap delta time to prevent physics issues
     dt = math.min(dt, 1/30)
-
-    dt = dt / 20
 
     if map then
         map:update(dt)
@@ -66,23 +68,26 @@ function love.update(dt)
 
     -- Simple camera (center on player)
     if map then
-        local camX = player.x - love.graphics.getWidth() / 2 + player.width / 2
-        local camY = player.y - love.graphics.getHeight() / 2 + player.height / 2
+        local camX = player.x - GAME_WIDTH / 2 + player.width / 2
+        local camY = player.y - GAME_HEIGHT / 2 + player.height / 2
 
         -- Clamp camera to map bounds
         local mapPixelWidth = map.width * map.tilewidth
         local mapPixelHeight = map.height * map.tileheight
 
-        camX = math.max(0, math.min(camX, mapPixelWidth - love.graphics.getWidth()))
-        camY = math.max(0, math.min(camY, mapPixelHeight - love.graphics.getHeight()))
+        camX = math.max(0, math.min(camX, mapPixelWidth - GAME_WIDTH))
+        camY = math.max(0, math.min(camY, mapPixelHeight - GAME_HEIGHT))
 
-        -- Store camera position for drawing
         map.camX = camX
         map.camY = camY
     end
 end
 
 function love.draw()
+    -- Draw game to native-resolution canvas
+    love.graphics.setCanvas(canvas)
+    love.graphics.clear()
+
     love.graphics.push()
 
     -- Apply camera transform
@@ -95,13 +100,10 @@ function love.draw()
         map:drawLayer(map.layers["Background"])
         map:drawLayer(map.layers["collision"])
     else
-        -- Draw placeholder background
         love.graphics.setColor(0.2, 0.2, 0.3)
-        love.graphics.rectangle("fill", 0, 0, love.graphics.getWidth(), love.graphics.getHeight())
-
-        -- Draw placeholder ground
+        love.graphics.rectangle("fill", 0, 0, GAME_WIDTH, GAME_HEIGHT)
         love.graphics.setColor(0.4, 0.3, 0.2)
-        love.graphics.rectangle("fill", 0, 500, love.graphics.getWidth(), 100)
+        love.graphics.rectangle("fill", 0, 500, GAME_WIDTH, 100)
         love.graphics.setColor(1, 1, 1)
     end
 
@@ -113,17 +115,11 @@ function love.draw()
     end
 
     love.graphics.pop()
+    love.graphics.setCanvas()
 
-    -- Draw UI (not affected by camera)
+    -- Draw the canvas scaled up to the window
     love.graphics.setColor(1, 1, 1)
-    love.graphics.print("Arrow keys / WASD to move, Space to jump", 10, 10)
-    love.graphics.print("Press F1 for debug mode", 10, 30)
-
-    if not map then
-        love.graphics.setColor(1, 0.5, 0.5)
-        love.graphics.print("No map loaded - create maps/level1.lua in Tiled", 10, 60)
-        love.graphics.setColor(1, 1, 1)
-    end
+    love.graphics.draw(canvas, 0, 0, 0, SCALE, SCALE)
 end
 
 function love.keypressed(key)
@@ -140,7 +136,6 @@ function love.keypressed(key)
     end
 
     if key == "r" then
-        -- Restart
         love.load()
     end
 end

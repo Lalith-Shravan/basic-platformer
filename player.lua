@@ -13,17 +13,17 @@ function Player.new(x, y, tileset, frameWidth, frameHeight)
     -- Physics
     self.vx = 0
     self.vy = 0
-    self.speed = 200
-    self.jumpForce = -400
-    self.gravity = 800
+    self.speed = 50
+    self.jumpForce = -120
+    self.gravity = 250
     self.onGround = false
 
     -- Collision box offset (adjust if sprite has padding)
     self.collider = {
-        offsetX = 4,
+        offsetX = 1,
         offsetY = 0,
-        width = frameWidth - 8 or 24,
-        height = frameHeight or 32
+        width = (frameWidth or 8) - 2,
+        height = frameHeight or 8
     }
 
     -- Animation
@@ -35,7 +35,7 @@ function Player.new(x, y, tileset, frameWidth, frameHeight)
     self.currentAnim = "idle"
     self.currentFrame = 1
     self.animTimer = 0
-    self.animSpeed = 0.1
+    self.animSpeed = 0.25
     self.facingRight = true
 
     return self
@@ -135,15 +135,16 @@ function Player:moveWithCollision(dt, collisionLayer, tw, th)
     local newY = self.y + self.vy * dt
     if not self:checkCollision(self.x, newY, collisionLayer, tw, th) then
         self.y = newY
-        self.onGround = false
     else
         if self.vy > 0 then
-            self.onGround = true
             -- Snap to ground
             self.y = math.floor((self.y + self.collider.height) / th) * th - self.collider.height
         end
         self.vy = 0
     end
+
+    -- Ground probe: check 1 pixel below feet
+    self.onGround = self:checkCollision(self.x, self.y + 1, collisionLayer, tw, th)
 end
 
 function Player:checkCollision(x, y, collisionLayer, tw, th)
@@ -183,6 +184,8 @@ end
 
 function Player:draw()
     local scaleX = self.facingRight and 1 or -1
+    local drawX = math.floor(self.x)
+    local drawY = math.floor(self.y)
     local offsetX = self.facingRight and 0 or self.frameWidth
 
     if self.tileset and self.animations[self.currentAnim] then
@@ -190,8 +193,8 @@ function Player:draw()
         love.graphics.draw(
             self.tileset,
             quad,
-            self.x + offsetX,
-            self.y,
+            drawX + offsetX,
+            drawY,
             0,
             scaleX,
             1
@@ -199,7 +202,7 @@ function Player:draw()
     else
         -- Fallback rectangle if no tileset
         love.graphics.setColor(0.2, 0.6, 1)
-        love.graphics.rectangle("fill", self.x, self.y, self.width, self.height)
+        love.graphics.rectangle("fill", drawX, drawY, self.width, self.height)
         love.graphics.setColor(1, 1, 1)
     end
 end

@@ -75,7 +75,7 @@ function Player:setAnimation(name)
     end
 end
 
-function Player:update(dt, collisionLayer)
+function Player:update(dt, collisionLayer, tileWidth, tileHeight)
     -- Horizontal input
     self.vx = 0
     if love.keyboard.isDown("left", "a") then
@@ -91,7 +91,7 @@ function Player:update(dt, collisionLayer)
     self.vy = self.vy + self.gravity * dt
 
     -- Update position with collision
-    self:moveWithCollision(dt, collisionLayer)
+    self:moveWithCollision(dt, collisionLayer, tileWidth, tileHeight)
 
     -- Update animation state
     if not self.onGround then
@@ -115,7 +115,7 @@ function Player:update(dt, collisionLayer)
     end
 end
 
-function Player:moveWithCollision(dt, collisionLayer)
+function Player:moveWithCollision(dt, collisionLayer, tw, th)
     if not collisionLayer then
         -- No collision layer, just move freely
         self.x = self.x + self.vx * dt
@@ -125,7 +125,7 @@ function Player:moveWithCollision(dt, collisionLayer)
 
     -- Horizontal movement
     local newX = self.x + self.vx * dt
-    if not self:checkCollision(newX, self.y, collisionLayer) then
+    if not self:checkCollision(newX, self.y, collisionLayer, tw, th) then
         self.x = newX
     else
         self.vx = 0
@@ -133,23 +133,21 @@ function Player:moveWithCollision(dt, collisionLayer)
 
     -- Vertical movement
     local newY = self.y + self.vy * dt
-    if not self:checkCollision(self.x, newY, collisionLayer) then
+    if not self:checkCollision(self.x, newY, collisionLayer, tw, th) then
         self.y = newY
         self.onGround = false
     else
         if self.vy > 0 then
             self.onGround = true
             -- Snap to ground
-            self.y = math.floor((self.y + self.collider.height) / collisionLayer.tileheight) * collisionLayer.tileheight - self.collider.height
+            self.y = math.floor((self.y + self.collider.height) / th) * th - self.collider.height
         end
         self.vy = 0
     end
 end
 
-function Player:checkCollision(x, y, collisionLayer)
+function Player:checkCollision(x, y, collisionLayer, tw, th)
     local col = self.collider
-    local tw = collisionLayer.tilewidth
-    local th = collisionLayer.tileheight
 
     -- Get the tiles the player's collision box overlaps
     local left = math.floor((x + col.offsetX) / tw)

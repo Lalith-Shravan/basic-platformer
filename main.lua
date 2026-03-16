@@ -56,11 +56,13 @@ function love.update(dt)
     -- Cap delta time to prevent physics issues
     dt = math.min(dt, 1/30)
 
+    dt = dt / 20
+
     if map then
         map:update(dt)
     end
 
-    player:update(dt, collisionLayer)
+    player:update(dt, collisionLayer, map and map.tilewidth or 8, map and map.tileheight or 8)
 
     -- Simple camera (center on player)
     if map then
@@ -90,9 +92,8 @@ function love.draw()
 
     -- Draw map layers
     if map then
-        map:drawLayer(map.layers["background"])
-        map:drawLayer(map.layers["tiles"])
-        -- Add more layers as needed from your Tiled map
+        map:drawLayer(map.layers["Background"])
+        map:drawLayer(map.layers["collision"])
     else
         -- Draw placeholder background
         love.graphics.setColor(0.2, 0.2, 0.3)

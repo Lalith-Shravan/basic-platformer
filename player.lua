@@ -137,7 +137,7 @@ function Player:moveWithCollision(dt, collisionLayer, tw, th)
         self.y = newY
     else
         if self.vy > 0 then
-            -- Snap to ground
+            -- Snap to ground (use newY to correctly identify the tile we collided with)
             self.y = math.floor((self.y + self.collider.height) / th) * th - self.collider.height
         end
         self.vy = 0
@@ -170,8 +170,7 @@ end
 
 function Player:getTile(layer, x, y)
     if x < 0 or y < 0 then return nil end
-    if y + 1 > #layer.data then return nil end
-    if x + 1 > #layer.data[y + 1] then return nil end
+    if not layer.data[y + 1] then return nil end
     return layer.data[y + 1][x + 1]
 end
 

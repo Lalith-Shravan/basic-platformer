@@ -9,51 +9,76 @@ local player
 local collisionLayer
 local debugMode = false
 
+local levelList = {}
+local currentLevel = 1
+local spawnPoint = {x = 100, y = 100}
+local endRect = nil
+
 -- Scaling
 local GAME_WIDTH = 240
 local GAME_HEIGHT = 160
 local SCALE = 4
 local canvas
 
+function loadLevel(idx)
+    local mapPath = levelList[idx]
+    if not mapPath or not love.filesystem.getInfo(mapPath) then
+        print("No map found at " .. tostring(mapPath))
+        return false
+    end
+    map = sti(mapPath)
+    collisionLayer = nil
+    spawnPoint = {x = 100, y = 100}
+    endRect = nil
+    -- Find layers
+    for _, layer in ipairs(map.layers) do
+        if layer.name == "collision" or layer.name == "solid" then
+            collisionLayer = layer
+            layer.visible = false
+        elseif layer.type == "objectgroup" and layer.name == "Spawn" and layer.objects and #layer.objects >= 1 then
+            spawnPoint.x = layer.objects[1].x
+            spawnPoint.y = layer.objects[1].y
+        elseif layer.type == "objectgroup" and layer.name == "End" and layer.objects and #layer.objects >= 1 then
+            local obj = layer.objects[1]
+            endRect = {x = obj.x, y = obj.y, w = obj.width, h = obj.height}
+        end
+    end
+    return true
+end
+
 function love.load()
     love.graphics.setDefaultFilter("nearest", "nearest")
-
     canvas = love.graphics.newCanvas(GAME_WIDTH, GAME_HEIGHT)
-
-    -- Load the Tiled map (export as .lua from Tiled)
-    local mapPath = "maps/level1.lua"
-    if love.filesystem.getInfo(mapPath) then
-        map = sti(mapPath)
-
-        -- Find the collision layer (name it "collision" or "solid" in Tiled)
-        for _, layer in ipairs(map.layers) do
-            if layer.name == "collision" or layer.name == "solid" then
-                collisionLayer = layer
-                layer.visible = false -- Hide collision layer
-                break
-            end
-        end
-    else
-        print("No map found at " .. mapPath)
-        print("Create a map in Tiled and export as Lua to maps/level1.lua")
-    end
-
     -- Load player tileset
     local playerTileset = nil
     local tilesetPath = "assets/player.png"
     if love.filesystem.getInfo(tilesetPath) then
         playerTileset = love.graphics.newImage(tilesetPath)
     end
-
-    -- Create player (x, y, tileset, frameWidth, frameHeight)
-    player = Player.new(100, 100, playerTileset, 8, 8)
-
-    -- Set up animations
+    -- Discover levels in maps/ directory if none specified
+    if #levelList == 0 and love.filesystem.getInfo("maps") then
+        for _, fname in ipairs(love.filesystem.getDirectoryItems("maps")) do
+            if fname:match("%.lua$") then
+                table.insert(levelList, "maps/" .. fname)
+            end
+        end
+        table.sort(levelList)
+    end
+    -- Load first level
+    loadLevel(currentLevel)
+    player = Player.new(spawnPoint.x, spawnPoint.y, playerTileset, 8, 8)
     player:setupAnimations({
         idle = {1},
         run = {3, 4},
         jump = {2}
     })
+end
+
+function checkEndCollision()
+    
+    if not endRect then return false end
+    local px, py, pw, ph = player.x, player.y, player.width, player.height
+    return px < endRect.x + endRect.w and px + pw > endRect.x and py < endRect.y + endRect.h and py + ph > endRect.y
 end
 
 function love.update(dt)
@@ -65,6 +90,18 @@ function love.update(dt)
     end
 
     player:update(dt, collisionLayer, map and map.tilewidth or 8, map and map.tileheight or 8)
+
+    -- Level end check
+    if checkEndCollision() then
+        if currentLevel < #levelList then
+            currentLevel = currentLevel + 1
+            loadLevel(currentLevel)
+            player.x = spawnPoint.x
+            player.y = spawnPoint.y
+            player.vx = 0
+            player.vy = 0
+        end
+    end
 
     -- Simple camera (center on player)
     if map then
@@ -97,8 +134,27 @@ function love.draw()
 
     -- Draw map layers
     if map then
-        map:drawLayer(map.layers["Background"])
-        map:drawLayer(map.layers["collision"])
+        -- Draw Background, collision, Spawn and End layers if present
+        local bgLayer, colLayer, spawnLayer, endLayer
+        for _, layer in ipairs(map.layers) do
+            if layer.name == "Background" then bgLayer = layer end
+            if layer.name == "collision" then colLayer = layer end
+            if layer.name == "Spawn" and layer.type == "objectgroup" then spawnLayer = layer end
+            if layer.name == "End" and layer.type == "objectgroup" then endLayer = layer end
+        end
+        if bgLayer then map:drawLayer(bgLayer) end
+        if colLayer then map:drawLayer(colLayer) end
+        -- draw object layers so spawn/end objects render (if they use gids)
+        if spawnLayer then map:drawLayer(spawnLayer) end
+        if endLayer then map:drawLayer(endLayer) end
+        -- fallback visual markers for spawn/end when in debug mode
+        if debugMode then
+            love.graphics.setColor(0, 1, 0, 0.6)
+            if spawnPoint then love.graphics.rectangle("line", spawnPoint.x, spawnPoint.y, 8, 8) end
+            love.graphics.setColor(1, 0, 0, 0.6)
+            if endRect then love.graphics.rectangle("line", endRect.x, endRect.y, endRect.w, endRect.h) end
+            love.graphics.setColor(1, 1, 1)
+        end
     else
         love.graphics.setColor(0.2, 0.2, 0.3)
         love.graphics.rectangle("fill", 0, 0, GAME_WIDTH, GAME_HEIGHT)
@@ -136,6 +192,10 @@ function love.keypressed(key)
     end
 
     if key == "r" then
-        love.load()
+        loadLevel(currentLevel)
+        player.x = spawnPoint.x
+        player.y = spawnPoint.y
+        player.vx = 0
+        player.vy = 0
     end
 end

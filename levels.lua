@@ -3,11 +3,9 @@ local sti = require("libs.sti")
 local L = {}
 
 local currentLevel = 1
-local levelList = {}
+local levelList = {"maps/Level1.lua"}
 
 function L.discoverLevels()
-
-    -- Discover levels in maps/ directory if none specified
     if #levelList == 0 and love.filesystem.getInfo("maps") then
         for _, fname in ipairs(love.filesystem.getDirectoryItems("maps")) do
             if fname:match("%.lua$") then
@@ -27,7 +25,7 @@ function L.loadCurrentLevel()
     local map = sti(mapPath)
     local collisionLayer = nil
     local spawnPoint = {x = 100, y = 100}
-    -- Find layers
+
     for _, layer in ipairs(map.layers) do
         if layer.name == "collision" or layer.name == "solid" then
             collisionLayer = layer
@@ -44,7 +42,6 @@ function L.loadCurrentLevel()
 end
 
 function L.loadNextLevel()
-
     if (currentLevel == #levelList) then
         currentLevel = 1
     else
@@ -52,7 +49,6 @@ function L.loadNextLevel()
     end
 
     return L.loadCurrentLevel()
-    
 end
 
 return L

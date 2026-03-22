@@ -72,19 +72,16 @@ function Player:setAnimation(name)
     end
 end
 
-function Player:update(dt, collisionLayer, tileWidth, tileHeight)
+function Player:update(dt, tileWidth, tileHeight)
     self.vx = 0
 
     -- TODO: Add left functionality
     -- TODO: Add right functionality
 
-    -- Apply gravity
     self.vy = self.vy + self.gravity * dt
 
-    -- Update position with collision (now centralized, includes spawn/end layers)
-    self:moveWithCollision(dt, collisionLayer, tileWidth, tileHeight, self.spawnLayer, self.endLayer, self.spikesLayer)
+    self:moveWithCollision(dt, tileWidth, tileHeight)
 
-    -- Update animation state
     if not self.onGround then
         self:setAnimation("jump")
     elseif self.vx ~= 0 then
@@ -93,7 +90,6 @@ function Player:update(dt, collisionLayer, tileWidth, tileHeight)
         self:setAnimation("idle")
     end
 
-    -- Update animation frame
     if self.animations[self.currentAnim] then
         self.animTimer = self.animTimer + dt
         if self.animTimer >= self.animSpeed then
@@ -106,10 +102,10 @@ function Player:update(dt, collisionLayer, tileWidth, tileHeight)
     end
 end
 
-function Player:moveWithCollision(dt, collisionLayer, tw, th, spawnLayer, endLayer, spikesLayer)
+function Player:moveWithCollision(dt, tw, th)
     -- Horizontal movement
     local newX = self.x + self.vx * dt
-    if not self:checkCollision(newX, self.y, collisionLayer, tw, th) then
+    if not self:checkCollision(newX, self.y, tw, th) then
         self.x = newX
     else
         self.vx = 0
@@ -117,7 +113,7 @@ function Player:moveWithCollision(dt, collisionLayer, tw, th, spawnLayer, endLay
 
     -- Vertical movement
     local newY = self.y + self.vy * dt
-    if not self:checkCollision(self.x, newY, collisionLayer, tw, th) then
+    if not self:checkCollision(self.x, newY, tw, th) then
         self.y = newY
     else
         if self.vy > 0 then
@@ -126,22 +122,20 @@ function Player:moveWithCollision(dt, collisionLayer, tw, th, spawnLayer, endLay
         self.vy = 0
     end
 
-    -- Ground probe: check 1 pixel below feet
-    self.onGround = self:checkCollision(self.x, self.y + 1, collisionLayer, tw, th)
+    -- Ground probe
+    self.onGround = self:checkCollision(self.x, self.y + 1, tw, th)
 
-    -- Centralized: check for collisions with spawn and end objects if layers provided
     self.onSpawn = false
     self.onEnd = false
     self.onSpikes = false
-    isTouchingObjectInLayer(spawnLayer, function(bool) self.onSpawn = bool end, self.x, self.y, self.width, self.height)
-    isTouchingObjectInLayer(endLayer, function(bool) self.onEnd = bool end, self.x, self.y, self.width, self.height)
-    isTouchingObjectInLayer(spikesLayer, function(bool) self.onSpikes = bool end, self.x, self.y, self.width, self.height)
+    isTouchingObjectInLayer(self.spawnLayer, function(bool) self.onSpawn = bool end, self.x, self.y, self.width, self.height)
+    isTouchingObjectInLayer(self.endLayer, function(bool) self.onEnd = bool end, self.x, self.y, self.width, self.height)
+    isTouchingObjectInLayer(self.spikesLayer, function(bool) self.onSpikes = bool end, self.x, self.y, self.width, self.height)
 end
 
-function Player:checkCollision(x, y, collisionLayer, tw, th)
+function Player:checkCollision(x, y, tw, th)
     local col = self.collider
 
-    -- Get the tiles the player's collision box overlaps
     local left = math.floor((x + col.offsetX) / tw)
     local right = math.floor((x + col.offsetX + col.width - 1) / tw)
     local top = math.floor((y + col.offsetY) / th)
@@ -149,7 +143,7 @@ function Player:checkCollision(x, y, collisionLayer, tw, th)
 
     for ty = top, bottom do
         for tx = left, right do
-            local tile = self:getTile(collisionLayer, tx, ty)
+            local tile = self:getTile(self.collisionLayer, tx, ty)
             if tile then
                 return true
             end

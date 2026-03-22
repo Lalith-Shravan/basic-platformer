@@ -4,7 +4,6 @@ local levelManager = require("levels")
 local map
 local player
 local collisionLayer
-local debugMode = false
 
 local spawnPoint
 
@@ -14,7 +13,6 @@ local SCALE = 4
 local canvas
 
 function love.load()
-
     love.graphics.setDefaultFilter("nearest", "nearest")
 
     canvas = love.graphics.newCanvas(GAME_WIDTH, GAME_HEIGHT)
@@ -24,12 +22,12 @@ function love.load()
     if love.filesystem.getInfo(tilesetPath) then
         playerTileset = love.graphics.newImage(tilesetPath)
     end
-    
-    -- TODO: Discover and Load Levels
 
-    -- TODO: Create player
+    -- TODO: Discover Levels
+    map, collisionLayer, spawnPoint = levelManager.loadCurrentLevel()
 
-    -- TODO: Set up player animations
+    -- TODO: Set up animations
+    player = Player.new(50, 50, playerTileset, 8, 8)
 end
 
 function love.update(dt)
@@ -37,7 +35,6 @@ function love.update(dt)
         map:update(dt)
     end
 
-    -- Find spawn and end object layers for centralized collision
     local spawnLayer, endLayer, spikesLayer
 
     if map and map.layers then
@@ -48,10 +45,12 @@ function love.update(dt)
         end
     end
 
+    player.collisionLayer = collisionLayer
     player.spawnLayer = spawnLayer
     player.endLayer = endLayer
     player.spikesLayer = spikesLayer
-    player:update(dt, collisionLayer, map and map.tilewidth or 8, map and map.tileheight or 8)
+
+    player:update(dt, map.tilewidth, map.tileheight)
 
     -- TODO: Add spike functionality
 
@@ -61,11 +60,10 @@ end
 function love.draw()
     love.graphics.setCanvas(canvas)
     love.graphics.clear()
-    love.graphics.push()
 
     if map then
         local bgLayer, colLayer, spawnLayer, endLayer, spikesLayer
-        
+
         for _, layer in ipairs(map.layers) do
             if layer.name == "Background" then bgLayer = layer end
             if layer.name == "collision" then colLayer = layer end
@@ -74,16 +72,14 @@ function love.draw()
             if layer.name == "Spikes" and layer.type == "objectgroup" then spikesLayer = layer end
         end
 
-        if bgLayer then map:drawLayer(bgLayer) end
-        if colLayer then map:drawLayer(colLayer) end
-        if spawnLayer then map:drawLayer(spawnLayer) end
-        if endLayer then map:drawLayer(endLayer) end
-        if spikesLayer then map:drawLayer(spikesLayer) end
+        map:drawLayer(bgLayer)
+        map:drawLayer(colLayer)
+
+        -- TODO: Draw other layers
     end
 
     player:draw()
 
-    love.graphics.pop()
     love.graphics.setCanvas()
 
     love.graphics.setColor(1, 1, 1)
@@ -91,12 +87,11 @@ function love.draw()
 end
 
 function love.keypressed(key)
-    
     if key == "escape" then
         love.event.quit()
     end
 
     -- TODO: Add jump functionality
 
-    -- TODO: Add reste functionality
+    -- TODO: Add reset functionality
 end

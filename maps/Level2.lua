@@ -10,7 +10,7 @@ return {
   tilewidth = 8,
   tileheight = 8,
   nextlayerid = 5,
-  nextobjectid = 3,
+  nextobjectid = 4,
   properties = {},
   tilesets = {
     {
@@ -152,21 +152,6 @@ return {
           gid = 73,
           visible = true,
           properties = {}
-        },
-        {
-          id = 2,
-          name = "",
-          type = "",
-          shape = "rectangle",
-          x = 216.892,
-          y = 76.6806,
-          width = 8,
-          height = 8,
-          rotation = 0,
-          opacity = 1,
-          gid = 74,
-          visible = true,
-          properties = {}
         }
       }
     },
@@ -183,7 +168,23 @@ return {
       parallaxx = 1,
       parallaxy = 1,
       properties = {},
-      objects = {}
+      objects = {
+        {
+          id = 2,
+          name = "",
+          type = "",
+          shape = "rectangle",
+          x = 216.892,
+          y = 76.6806,
+          width = 8,
+          height = 8,
+          rotation = 0,
+          opacity = 1,
+          gid = 74,
+          visible = true,
+          properties = {}
+        }
+      }
     }
   }
 }

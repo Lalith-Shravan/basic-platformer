@@ -1,11 +1,6 @@
 local Player = {}
 Player.__index = Player
 
--- Helper to check AABB collision with an object
-    function aabb(x1, y1, w1, h1, x2, y2, w2, h2)
-        return x1 < x2 + w2 and x1 + w1 > x2 and y1 < y2 + h2 and y1 + h1 > y2
-    end
-
 function Player.new(x, y, tileset, frameWidth, frameHeight)
     local self = setmetatable({}, Player)
 
@@ -46,9 +41,6 @@ function Player.new(x, y, tileset, frameWidth, frameHeight)
     return self
 end
 
--- Set up animation frames from tileset
--- frameData format: { idle = {1, 2}, run = {3, 4, 5, 6}, jump = {7} }
--- Frame numbers are 1-indexed tile positions in the tileset
 function Player:setupAnimations(frameData)
     if not self.tileset then return end
 
@@ -121,23 +113,6 @@ function Player:update(dt, collisionLayer, tileWidth, tileHeight)
 end
 
 function Player:moveWithCollision(dt, collisionLayer, tw, th, spawnLayer, endLayer, spikesLayer)
-        self.onSpikes = false
-        -- Centralized: check for collisions with spikes objects if layer provided
-        if spikesLayer and spikesLayer.objects then
-            for _, obj in ipairs(spikesLayer.objects) do
-                if aabb(self.x, self.y, self.width, self.height, obj.x, obj.y, obj.width or 8, obj.height or 8) then
-                    self.onSpikes = true
-                    break
-                end
-            end
-        end
-    -- Centralized collision detection for tiles, spawn, and end objects
-    if not collisionLayer then
-        self.x = self.x + self.vx * dt
-        self.y = self.y + self.vy * dt
-        return
-    end
-
     -- Horizontal movement
     local newX = self.x + self.vx * dt
     if not self:checkCollision(newX, self.y, collisionLayer, tw, th) then
@@ -163,22 +138,10 @@ function Player:moveWithCollision(dt, collisionLayer, tw, th, spawnLayer, endLay
     -- Centralized: check for collisions with spawn and end objects if layers provided
     self.onSpawn = false
     self.onEnd = false
-    if spawnLayer and spawnLayer.objects then
-        for _, obj in ipairs(spawnLayer.objects) do
-            if aabb(self.x, self.y, self.width, self.height, obj.x, obj.y, obj.width or 8, obj.height or 8) then
-                self.onSpawn = true
-                break
-            end
-        end
-    end
-    if endLayer and endLayer.objects then
-        for _, obj in ipairs(endLayer.objects) do
-            if aabb(self.x, self.y, self.width, self.height, obj.x, obj.y, obj.width or 8, obj.height or 8) then
-                self.onEnd = true
-                break
-            end
-        end
-    end
+    self.onSpikes = false
+    isTouchingObjectInLayer(spawnLayer, function(bool) self.onSpawn = bool end, self.x, self.y, self.width, self.height)
+    isTouchingObjectInLayer(endLayer, function(bool) self.onEnd = bool end, self.x, self.y, self.width, self.height)
+    isTouchingObjectInLayer(spikesLayer, function(bool) self.onSpikes = bool end, self.x, self.y, self.width, self.height)
 end
 
 function Player:checkCollision(x, y, collisionLayer, tw, th)
@@ -240,16 +203,20 @@ function Player:draw()
     end
 end
 
-function Player:drawDebug()
-    -- Draw collision box
-    love.graphics.setColor(1, 0, 0, 0.5)
-    love.graphics.rectangle("line",
-        self.x + self.collider.offsetX,
-        self.y + self.collider.offsetY,
-        self.collider.width,
-        self.collider.height
-    )
-    love.graphics.setColor(1, 1, 1)
+-- Helper to check AABB collision with an object
+function aabb(x1, y1, w1, h1, x2, y2, w2, h2)
+    return x1 < x2 + w2 and x1 + w1 > x2 and y1 < y2 + h2 and y1 + h1 > y2
+end
+
+function isTouchingObjectInLayer(layer, setFunction, x, y, w, h)
+    if layer and layer.objects then
+        for _, obj in ipairs(layer.objects) do
+            if aabb(x, y, w, h, obj.x, obj.y, obj.width or 8, obj.height or 8) then
+                setFunction(true)
+                break
+            end
+        end
+    end
 end
 
 return Player

@@ -75,8 +75,8 @@ end
 function Player:update(dt, tileWidth, tileHeight)
     self.vx = 0
 
-    -- TODO: Add left functionality
-    -- TODO: Add right functionality
+    -- TODO: Add left functionality (2)
+    -- TODO: Add right functionality (3)
 
     self.vy = self.vy + self.gravity * dt
 

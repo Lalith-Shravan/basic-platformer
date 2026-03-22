@@ -23,12 +23,12 @@ function love.load()
         playerTileset = love.graphics.newImage(tilesetPath)
     end
 
-    -- TODO: Discover Levels
+    -- TODO: Discover Levels (9)
     map, collisionLayer, spawnPoint = levelManager.loadCurrentLevel()
 
-    -- TODO: Set up animations
-    -- TODO: Spawn correctly
+    -- TODO: Spawn correctly (6)
     player = Player.new(50, 50, playerTileset, 8, 8)
+    -- TODO: Set up animations (1)
 end
 
 function love.update(dt)
@@ -53,9 +53,9 @@ function love.update(dt)
 
     player:update(dt, map.tilewidth, map.tileheight)
 
-    -- TODO: Add spike functionality
+    -- TODO: Add spike functionality (8)
 
-    -- TODO: Add end of level functionality
+    -- TODO: Add end of level functionality (10)
 end
 
 function love.draw()
@@ -76,7 +76,7 @@ function love.draw()
         map:drawLayer(bgLayer)
         map:drawLayer(colLayer)
 
-        -- TODO: Draw other layers
+        -- TODO: Draw other layers (5)
     end
 
     player:draw()
@@ -92,7 +92,7 @@ function love.keypressed(key)
         love.event.quit()
     end
 
-    -- TODO: Add jump functionality
+    -- TODO: Add jump functionality (4)
 
-    -- TODO: Add reset functionality
+    -- TODO: Add reset functionality (7)
 end

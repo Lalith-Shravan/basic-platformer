@@ -89,7 +89,27 @@ function love.update(dt)
         map:update(dt)
     end
 
+    -- Find spawn and end object layers for centralized collision
+    local spawnLayer, endLayer, spikesLayer
+    if map and map.layers then
+        for _, layer in ipairs(map.layers) do
+            if layer.name == "Spawn" and layer.type == "objectgroup" then spawnLayer = layer end
+            if layer.name == "End" and layer.type == "objectgroup" then endLayer = layer end
+            if layer.name == "Spikes" and layer.type == "objectgroup" then spikesLayer = layer end
+        end
+    end
+    player.spawnLayer = spawnLayer
+    player.endLayer = endLayer
+    player.spikesLayer = spikesLayer
     player:update(dt, collisionLayer, map and map.tilewidth or 8, map and map.tileheight or 8)
+
+    -- If player touched spikes, reset to spawn
+    if player.onSpikes and spawnPoint then
+        player.x = spawnPoint.x
+        player.y = spawnPoint.y
+        player.vx = 0
+        player.vy = 0
+    end
 
     -- Level end check
     if checkEndCollision() then
@@ -116,19 +136,21 @@ function love.draw()
 
     -- Draw map layers
     if map then
-        -- Draw Background, collision, Spawn and End layers if present
-        local bgLayer, colLayer, spawnLayer, endLayer
+        -- Draw Background, collision, Spawn, End, and Spikes layers if present
+        local bgLayer, colLayer, spawnLayer, endLayer, spikesLayer
         for _, layer in ipairs(map.layers) do
             if layer.name == "Background" then bgLayer = layer end
             if layer.name == "collision" then colLayer = layer end
             if layer.name == "Spawn" and layer.type == "objectgroup" then spawnLayer = layer end
             if layer.name == "End" and layer.type == "objectgroup" then endLayer = layer end
+            if layer.name == "Spikes" and layer.type == "objectgroup" then spikesLayer = layer end
         end
         if bgLayer then map:drawLayer(bgLayer) end
         if colLayer then map:drawLayer(colLayer) end
-        -- draw object layers so spawn/end objects render (if they use gids)
         if spawnLayer then map:drawLayer(spawnLayer) end
         if endLayer then map:drawLayer(endLayer) end
+        if spikesLayer then map:drawLayer(spikesLayer) end
+
         -- fallback visual markers for spawn/end when in debug mode
         if debugMode then
             love.graphics.setColor(0, 1, 0, 0.6)

@@ -1,6 +1,11 @@
 local Player = {}
 Player.__index = Player
 
+-- Helper to check AABB collision with an object
+    function aabb(x1, y1, w1, h1, x2, y2, w2, h2)
+        return x1 < x2 + w2 and x1 + w1 > x2 and y1 < y2 + h2 and y1 + h1 > y2
+    end
+
 function Player.new(x, y, tileset, frameWidth, frameHeight)
     local self = setmetatable({}, Player)
 
@@ -90,8 +95,8 @@ function Player:update(dt, collisionLayer, tileWidth, tileHeight)
     -- Apply gravity
     self.vy = self.vy + self.gravity * dt
 
-    -- Update position with collision
-    self:moveWithCollision(dt, collisionLayer, tileWidth, tileHeight)
+    -- Update position with collision (now centralized, includes spawn/end layers)
+    self:moveWithCollision(dt, collisionLayer, tileWidth, tileHeight, self.spawnLayer, self.endLayer, self.spikesLayer)
 
     -- Update animation state
     if not self.onGround then
@@ -115,9 +120,19 @@ function Player:update(dt, collisionLayer, tileWidth, tileHeight)
     end
 end
 
-function Player:moveWithCollision(dt, collisionLayer, tw, th)
+function Player:moveWithCollision(dt, collisionLayer, tw, th, spawnLayer, endLayer, spikesLayer)
+        self.onSpikes = false
+        -- Centralized: check for collisions with spikes objects if layer provided
+        if spikesLayer and spikesLayer.objects then
+            for _, obj in ipairs(spikesLayer.objects) do
+                if aabb(self.x, self.y, self.width, self.height, obj.x, obj.y, obj.width or 8, obj.height or 8) then
+                    self.onSpikes = true
+                    break
+                end
+            end
+        end
+    -- Centralized collision detection for tiles, spawn, and end objects
     if not collisionLayer then
-        -- No collision layer, just move freely
         self.x = self.x + self.vx * dt
         self.y = self.y + self.vy * dt
         return
@@ -137,7 +152,6 @@ function Player:moveWithCollision(dt, collisionLayer, tw, th)
         self.y = newY
     else
         if self.vy > 0 then
-            -- Snap to ground (use newY to correctly identify the tile we collided with)
             self.y = math.floor((self.y + self.collider.height) / th) * th - self.collider.height
         end
         self.vy = 0
@@ -145,6 +159,26 @@ function Player:moveWithCollision(dt, collisionLayer, tw, th)
 
     -- Ground probe: check 1 pixel below feet
     self.onGround = self:checkCollision(self.x, self.y + 1, collisionLayer, tw, th)
+
+    -- Centralized: check for collisions with spawn and end objects if layers provided
+    self.onSpawn = false
+    self.onEnd = false
+    if spawnLayer and spawnLayer.objects then
+        for _, obj in ipairs(spawnLayer.objects) do
+            if aabb(self.x, self.y, self.width, self.height, obj.x, obj.y, obj.width or 8, obj.height or 8) then
+                self.onSpawn = true
+                break
+            end
+        end
+    end
+    if endLayer and endLayer.objects then
+        for _, obj in ipairs(endLayer.objects) do
+            if aabb(self.x, self.y, self.width, self.height, obj.x, obj.y, obj.width or 8, obj.height or 8) then
+                self.onEnd = true
+                break
+            end
+        end
+    end
 end
 
 function Player:checkCollision(x, y, collisionLayer, tw, th)

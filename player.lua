@@ -73,16 +73,10 @@ function Player:setAnimation(name)
 end
 
 function Player:update(dt, collisionLayer, tileWidth, tileHeight)
-    -- Horizontal input
     self.vx = 0
-    if love.keyboard.isDown("left", "a") then
-        self.vx = -self.speed
-        self.facingRight = false
-    end
-    if love.keyboard.isDown("right", "d") then
-        self.vx = self.speed
-        self.facingRight = true
-    end
+
+    -- TODO: Add left functionality
+    -- TODO: Add right functionality
 
     -- Apply gravity
     self.vy = self.vy + self.gravity * dt

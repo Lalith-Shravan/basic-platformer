@@ -1,7 +1,6 @@
 local Player = require("player")
 local levelManager = require("levels")
 
--- Game state
 local map
 local player
 local collisionLayer
@@ -9,7 +8,6 @@ local debugMode = false
 
 local spawnPoint
 
--- Scaling
 local GAME_WIDTH = 240
 local GAME_HEIGHT = 160
 local SCALE = 4
@@ -21,22 +19,17 @@ function love.load()
 
     canvas = love.graphics.newCanvas(GAME_WIDTH, GAME_HEIGHT)
 
-    -- Load player tileset
     local playerTileset = nil
     local tilesetPath = "assets/player.png"
     if love.filesystem.getInfo(tilesetPath) then
         playerTileset = love.graphics.newImage(tilesetPath)
     end
     
-    levelManager.discoverLevels()
-    -- Load first level
-    map, collisionLayer, spawnPoint = levelManager.loadCurrentLevel()
-    player = Player.new(spawnPoint.x, spawnPoint.y, playerTileset, 8, 8)
-    player:setupAnimations({
-        idle = {1},
-        run = {3, 4},
-        jump = {2}
-    })
+    -- TODO: Discover and Load Levels
+
+    -- TODO: Create player
+
+    -- TODO: Set up player animations
 end
 
 function love.update(dt)
@@ -60,22 +53,9 @@ function love.update(dt)
     player.spikesLayer = spikesLayer
     player:update(dt, collisionLayer, map and map.tilewidth or 8, map and map.tileheight or 8)
 
-    -- If player touched spikes, reset to spawn
-    if player.onSpikes and spawnPoint then
-        player.x = spawnPoint.x
-        player.y = spawnPoint.y
-        player.vx = 0
-        player.vy = 0
-    end
+    -- TODO: Add spike functionality
 
-    -- Level end check
-    if player.onEnd then
-        map, collisionLayer, spawnPoint = levelManager.loadNextLevel()
-        player.x = spawnPoint.x
-        player.y = spawnPoint.y
-        player.vx = 0
-        player.vy = 0
-    end
+    -- TODO: Add end of level functionality
 end
 
 function love.draw()
@@ -111,23 +91,12 @@ function love.draw()
 end
 
 function love.keypressed(key)
-    if key == "space" or key == "up" or key == "w" then
-        player:jump()
-    end
-
-    if key == "f1" then
-        debugMode = not debugMode
-    end
-
+    
     if key == "escape" then
         love.event.quit()
     end
 
-    if key == "r" then
-        levelManager.loadLevel()
-        player.x = spawnPoint.x
-        player.y = spawnPoint.y
-        player.vx = 0
-        player.vy = 0
-    end
+    -- TODO: Add jump functionality
+
+    -- TODO: Add reste functionality
 end

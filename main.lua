@@ -103,21 +103,7 @@ function love.update(dt)
         end
     end
 
-    -- Simple camera (center on player)
-    if map then
-        local camX = player.x - GAME_WIDTH / 2 + player.width / 2
-        local camY = player.y - GAME_HEIGHT / 2 + player.height / 2
-
-        -- Clamp camera to map bounds
-        local mapPixelWidth = map.width * map.tilewidth
-        local mapPixelHeight = map.height * map.tileheight
-
-        camX = math.max(0, math.min(camX, mapPixelWidth - GAME_WIDTH))
-        camY = math.max(0, math.min(camY, mapPixelHeight - GAME_HEIGHT))
-
-        map.camX = camX
-        map.camY = camY
-    end
+    -- Camera system removed: no camera calculations needed
 end
 
 function love.draw()
@@ -126,11 +112,7 @@ function love.draw()
     love.graphics.clear()
 
     love.graphics.push()
-
-    -- Apply camera transform
-    if map and map.camX then
-        love.graphics.translate(-math.floor(map.camX), -math.floor(map.camY))
-    end
+    -- Camera system removed: no translation needed
 
     -- Draw map layers
     if map then

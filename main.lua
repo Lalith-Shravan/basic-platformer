@@ -27,6 +27,7 @@ function love.load()
     map, collisionLayer, spawnPoint = levelManager.loadCurrentLevel()
 
     -- TODO: Set up animations
+    -- TODO: Spawn correctly
     player = Player.new(50, 50, playerTileset, 8, 8)
 end
 

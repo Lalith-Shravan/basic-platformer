@@ -6,7 +6,7 @@ local currentLevel = 1
 local levelList = {"maps/Level1.lua"}
 
 function L.discoverLevels()
-    if #levelList == 0 and love.filesystem.getInfo("maps") then
+    if love.filesystem.getInfo("maps") then
         for _, fname in ipairs(love.filesystem.getDirectoryItems("maps")) do
             if fname:match("%.lua$") then
                 table.insert(levelList, "maps/" .. fname)
